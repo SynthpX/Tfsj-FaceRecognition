@@ -80,9 +80,9 @@
         }
     }
 
-    function tambahDeskripsi(newPerson, deskripsi) {
+    function tambahDeskripsi(newOrg, deskripsi) {
         for (let i = 0; i < deskripsiLabel.length; i++) {
-            if (deskripsiLabel[i].label == newPerson) {
+            if (deskripsiLabel[i].label == newOrg) {
                 deskripsiLabel[i].deskripsis.push(new Float32Array(deskripsi.split(',')));
                 prosesMatching();
                 return;
@@ -90,7 +90,7 @@
         }
         deskripsis = [];
         deskripsis.push(new Float32Array(deskripsi.split(',')));
-        deskripsiLabel.push(new faceapi.LabeledFaceDescriptors(newPerson, deskripsis));
+        deskripsiLabel.push(new faceapi.LabeledFaceDescriptors(newOrg, deskripsis));
         prosesMatching();
     }
 
