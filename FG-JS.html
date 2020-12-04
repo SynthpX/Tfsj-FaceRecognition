@@ -3,7 +3,6 @@
 
 <head>
     <script>
-        // Needed if webcam is used
     if (location.protocol == "http:") {
         location.protocol = "https:";
     }
@@ -29,30 +28,29 @@
         <video id="webCam"></video>
     </div>
     <script>
-    var labeledFaceDescriptors = [];
+    var deskripsiLabel = [];
     var faceMatcher = null;
     var threshold = .3;
     var maxDiff = .6;
     var srcId = "myImg";
     var webCamTimeout = 0;
     
-    //localStorage.removeItem('faceMatcher'); //Uncomment to clear faceMatcher on load
     if (localStorage.getItem('faceMatcher')) {
         faceMatcher = faceapi.FaceMatcher.fromJSON(JSON.parse(localStorage.getItem('faceMatcher')));
-        labeledFaceDescriptors = faceMatcher.labeledDescriptors;
+        deskripsiLabel = faceMatcher.labeledDescriptors;
         maxDiff = faceMatcher.distanceThreshold;
         document.getElementById('maxDiff').value = maxDiff;
     }
 
-    function clearFaceNames() {
+    function hilangkanNm() {
         let paras = document.getElementsByClassName('faceNames');
         while (paras[0]) {
             paras[0].parentNode.removeChild(paras[0]);
         }
     }
 
-    function drawFaceRecognitionResults(results) {
-        clearFaceNames()
+    function hasilRecogInit(results) {
+        hilangkanNm()
         inputImgEl = document.getElementById(srcId);
         results = faceapi.resizeResults(results, inputImgEl);
 
@@ -75,25 +73,25 @@
         })
     }
  
-    function makeFaceMatcher() {
-        if (labeledFaceDescriptors.length > 0) {
-            faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, maxDiff);
+    function prosesMatching() {
+        if (deskripsiLabel.length > 0) {
+            faceMatcher = new faceapi.FaceMatcher(deskripsiLabel, maxDiff);
             localStorage.setItem('faceMatcher', JSON.stringify(faceMatcher.toJSON()));
         }
     }
 
-    function addDescriptor(newPerson, descriptor) {
-        for (let i = 0; i < labeledFaceDescriptors.length; i++) {
-            if (labeledFaceDescriptors[i].label == newPerson) {
-                labeledFaceDescriptors[i].descriptors.push(new Float32Array(descriptor.split(',')));
-                makeFaceMatcher();
+    function tambahDeskripsi(newPerson, deskripsi) {
+        for (let i = 0; i < deskripsiLabel.length; i++) {
+            if (deskripsiLabel[i].label == newPerson) {
+                deskripsiLabel[i].deskripsis.push(new Float32Array(deskripsi.split(',')));
+                prosesMatching();
                 return;
             }
         }
-        descriptors = [];
-        descriptors.push(new Float32Array(descriptor.split(',')));
-        labeledFaceDescriptors.push(new faceapi.LabeledFaceDescriptors(newPerson, descriptors));
-        makeFaceMatcher();
+        deskripsis = [];
+        deskripsis.push(new Float32Array(deskripsi.split(',')));
+        deskripsiLabel.push(new faceapi.LabeledFaceDescriptors(newPerson, deskripsis));
+        prosesMatching();
     }
 
     function personClick(e) {
@@ -101,7 +99,7 @@
         if (newPerson == null || newPerson == "" || newPerson == "unknown") {} else {
             e.target.dataset.person = newPerson;
             e.target.innerHTML = newPerson;
-            addDescriptor(newPerson, e.target.dataset.descriptor);
+            tambahDeskripsi(newPerson, e.target.dataset.descriptor);
             if (!document.getElementById('webCamToggle').checked) {
                 updateHasil();
             }
@@ -126,9 +124,9 @@
     }
 
     async function updateHasil() {
-        console.time('updateHasil')
+        console.time('updateHasil');
         updateStatus('updateHasil');
-        let options = new faceapi.SsdMobilenetv1Options({ minConfidence: Number(threshold) })
+        let options = new faceapi.SsdMobilenetv1Options({ minConfidence: Number(threshold) });
         results = await faceapi.detectAllFaces(srcId, options).withFaceLandmarks().withFaceExpressions().withAgeAndGender().withFaceDescriptors();
 
         results.forEach(function(result, i, results) {
@@ -139,7 +137,7 @@
             }
         })
 
-        drawFaceRecognitionResults(results);
+        hasilRecogInit(results);
         updateStatus('');
         console.timeEnd('updateHasil')
         if (document.getElementById('webCamToggle').checked) {
@@ -147,15 +145,15 @@
         }
     }
 
-    async function uploadImage(e) {
+    async function uploadGambar(e) {
         const imgFile = e.target.files[0]
         const img = await faceapi.bufferToImage(imgFile)
         document.getElementById("myImg").src = img.src
         updateHasil();
     }
 
-    function toggleWebCam(enable) {
-        clearFaceNames()
+    function nyalaWebcam(enable) {
+        hilangkanNm()
         webCam = document.getElementById('webCam');
         let constraints = true;
 
@@ -192,18 +190,18 @@
 
     document.getElementById('threshold').addEventListener('change', function(event) {
         threshold = event.target.value;
-        makeFaceMatcher();
+        prosesMatching();
         updateHasil();
     }, false);
 
     document.getElementById('maxDiff').addEventListener('change', function(event) {
         maxDiff = event.target.value;
-        makeFaceMatcher();
+        prosesMatching();
         updateHasil();
     }, false);
 
     document.getElementById('webCamToggle').addEventListener('change', function(event) {
-        toggleWebCam(event.target.checked);
+        nyalaWebcam(event.target.checked);
     }, false);
 
     perbaruiModel().then(updateHasil);
